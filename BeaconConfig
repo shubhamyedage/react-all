@@ -1,0 +1,141 @@
+import React, {Component} from 'react';
+import ReactDOM from 'react-dom';
+import Countdown from 'react-countdown-clock';
+import {Modal, Button, Image, Grid, Row, Col, ListGroup, ListGroupItem} from 'react-bootstrap';
+
+class BeaconConfigure extends Component {
+    constructor(){
+    super();
+    this.state = {
+      showModal: false,
+      msg: "Waiting for connection...",
+      msgType: "info",
+      closeButtonDisabled: true,
+      tryAgainButtonDisabled: true,
+      pauseCounter: false,
+      countComplete: false
+    }
+    this.displayModal = this.displayModal.bind(this)
+    this.closeModal = this.closeModal.bind(this)
+    this.showMessage = this.showMessage.bind(this)
+    this.reaquestToConnect = this.reaquestToConnect.bind(this)
+    this.reconnect = this.reconnect.bind(this)
+  }
+
+  displayModal(){
+      this.setState({
+        showModal: true
+      })
+  }
+
+  closeModal(){
+    this.setState({
+      showModal: false
+    })
+  }
+
+  showMessage(){
+    console.log('Halt!!')
+    // clearInterval(this.intervalId);
+    this.setState({
+      countComplete: true,
+      tryAgainButtonDisabled: false
+    })
+  }
+
+  reaquestToConnect(){
+    // Check connection status.
+    console.log("Checking for connection...");
+
+    let connectionStatus = true;
+    if(!connectionStatus){
+      // clearInterval(this.intervalId);
+      this.setState({
+        msg: "Connection unsuccessful!",
+        msgType: "danger",
+        tryAgainButtonDisabled: false,
+        pauseCounter: true
+      })
+      return
+    }
+    // clearInterval(this.intervalId);
+    this.setState({
+      msg: "Connection successful!",
+      msgType: "success",
+      closeButtonDisabled: false,
+      pauseCounter: true
+    })
+  }
+
+  reconnect(){
+    console.log('Reconnecting...');
+    this.setState({tryAgainButtonDisabled: true})
+    if(this.state.countComplete){
+      ReactDOM.render(
+        <Counter complete={this.showMessage} paused={this.state.pauseCounter}	/>,
+        document.getElementById('counterNode')
+      )
+      return
+    }
+    this.setState({pauseCounter: false})
+  }
+
+  render(){
+    return (
+      <div>
+        <button type='button' onClick={this.displayModal}>Configure</button>
+        <Modal bsSize='large' show={this.state.showModal} onHide={this.closeModal}>
+          <Modal.Header>
+            <Modal.Title>Beacon Configure</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Grid className='modalContainer'>
+              <Row>
+                <Col lg={3} md={3} xs={4}>
+                  <Image src="/img/gateway.png" rounded />
+                </Col>
+                <Col lg={9} md={9} xs={8}>
+                  <div id="counterNode" className="componentCounter">
+                    <Counter complete={this.showMessage} paused={this.state.pauseCounter}	/>
+                  </div>
+                  <ListGroup componentClass="div">
+                    <ListGroupItem bsStyle="info">
+                      Open the case to press the button on the Beacon board
+                      one time, quickly, to initiate the configuring mode.
+                      Physically identify your beacon by marking the
+                      label with it’s name.
+                    </ListGroupItem>
+                    <ListGroupItem bsStyle={this.state.msgType}>{this.state.msg}</ListGroupItem>
+                  </ListGroup>
+                </Col>
+              </Row>
+            </Grid>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button disabled={this.state.tryAgainButtonDisabled} onClick={this.reconnect}>Try Again</Button>
+            <Button disabled={this.state.closeButtonDisabled} onClick={this.closeModal}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+      </div>
+    )
+  }
+}
+
+
+
+class Counter extends Component {
+  render(){
+    return <Countdown seconds={20}
+                        color="#000"
+                        alpha={0.9}
+                        size={100}
+                        onComplete={this.props.complete}
+                        paused={this.props.paused} />
+  }
+  componentDidMount(){
+    this.intervalId = setInterval(this.reaquestToConnect, 5000)
+  }
+}
+
+export default BeaconConfigure
+
